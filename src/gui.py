@@ -1,15 +1,49 @@
-from doctest import master
-from ssl import PROTOCOL_TLSv1_1
 import tkinter as tk
+
+import json
+import pandas as pd
 
 import pathlib
 
-path_to_top = f"{pathlib.Path(__file__).parent.parent}"
+# Defining "global" variables
+PATH_TO_TOP = f"{pathlib.Path(__file__).resolve().parent.parent}"
+STAT_LABELS = [
+    "Player",
+    "Serves","Aces","Missed Serves",
+    "Received","Pass Rating",
+    "Swings","Swing Kills",
+    "Blocks","Block Kills",
+    "Bump Kills",
+    "Hitting Errors","Errors"]
+
+class InfoSetter:
+
+    def __init__(self, i, j, info_label, value="") -> None:
+        self.value = value
+        frm_game_info = tk.Frame(
+                master=window,
+                relief=tk.SUNKEN,
+            )
+        frm_game_info.grid(row=i,column=j)
+
+        self.lbl_info = tk.Label(master=frm_game_info, text=f"{info_label}:", anchor="w")
+        self.lbl_info.pack(padx=2, pady=2)
+
+        self.ent_info = tk.Entry(master=frm_game_info, width=5)
+        self.ent_info.pack(padx=1,pady=2)
+
+    def set_info(self):
+        """
+        Resets the info title
+        """
+        self.value = self.ent_info.get()
 
 class StatChangeWidget:
 
-    def __init__(self, i, j, value=0) -> None:
+    def __init__(self, i, j, value, stat_label) -> None:
         self.value = value
+        self.stat_label = stat_label
+
         frm = tk.Frame(
             master=window,
             relief=tk.GROOVE,
@@ -43,8 +77,9 @@ class StatChangeWidget:
 
 class ReceiveStatChangeWidget:
 
-    def __init__(self, i, j, value=0) -> None:
+    def __init__(self, i, j, value, stat_label) -> None:
         self.value = value
+        self.stat_label = stat_label
 
         frm = tk.Frame(
             master=window,
@@ -131,69 +166,149 @@ class PlayerStatWidget:
 
     def __init__(self, row) -> None:
         self.row = row
+        self.player = ""
+
+        self.stats = {label: 0 for label in STAT_LABELS if label != "Player"}
 
         frm = tk.Frame(
             master=window,
             relief=tk.GROOVE,
             borderwidth=1
         )
+        # First Column: Player Name
         frm.grid(row=self.row, column=0, padx=5, pady=5)
 
         self.lbl_player = tk.Label(master=frm, text=f"Enter Name")
         self.lbl_player.pack(padx=5, pady=5)
 
-        self.ent_player = tk.Entry(master=frm, width=10)
+        self.ent_player = tk.Entry(master=frm, width=8)
         self.ent_player.pack(padx=5,pady=5)
 
         btn_update = tk.Button(master=frm, text="update", command=self.set_player)
         btn_update.pack(padx=5,pady=5)
 
-        for j in range(1,13):
+        # Stat Columns
+        for j, stat_label in zip(range(1,13), self.stats.keys()):
             if j == 5:
-                ReceiveStatChangeWidget(self.row, j, 0)
+                self.stats[stat_label] = ReceiveStatChangeWidget(self.row, j, 0, stat_label)
             else:
-                StatChangeWidget(self.row, j, 0)
+                self.stats[stat_label] = StatChangeWidget(self.row, j, 0, stat_label)
+
+        # Last Column: Save Stats
+        frm_save = tk.Frame(
+            master=window,
+            relief=tk.FLAT,
+            borderwidth=1
+        )
+        frm_save.grid(row=self.row, column=14, padx=5, pady=5)
+
+        btn_save = tk.Button(master=frm_save, text="save", command=self.save_stats)
+        btn_save.pack(padx=5,pady=5)
 
     def set_player(self):
         """
         Sets the name of the player
         """
         self.lbl_player["text"] = self.ent_player.get()
+        self.player = self.lbl_player["text"]
+
+    def save_stats(self):
+        """
+        Saves the players stats
+        """
+        stat_values = {}
+        for key, widget in self.stats.items():
+            stat_values[key] = widget.value
+
+        stat_values["Player"] = self.player
+        with open(f"{PATH_TO_TOP}/data/raw/{self.player}-stats.json", "w") as f:
+            json.dump(stat_values, f)
 
 # Setting up Window
 window = tk.Tk()
 window.title("Beach Volleyball Stat Counter")
-window.iconbitmap(f"{path_to_top}/assets/hlb.ico")
+window.iconbitmap(f"{PATH_TO_TOP}/assets/hlb.ico")
 
-stat_labels = [
-    "Player",
-    "Serves","Aces","Missed Serves",
-    "Received","Pass Rating",
-    "Swings","Swing Kills",
-    "Blocks","Block Kills",
-    "Bump Kills",
-    "Hitting Errors","Errors"]
+# Date and Game
+# -------------
+# Creating info widgets
+year = InfoSetter(i=0,j=1,info_label="Year",value="1900")
+month = InfoSetter(i=0,j=2,info_label="Month",value="01")
+day = InfoSetter(i=0,j=3,info_label="Day",value="01")
+game_number = InfoSetter(i=0,j=4,info_label="Game",value="0")
+# creating frame for label
+frm_date_and_game = tk.Frame(
+    master=window,
+    relief=tk.SUNKEN,
+)
+frm_date_and_game.grid(row=0,column=5)
+# creating label from info widgets
+lbl_info = tk.Label(
+    master=frm_date_and_game,
+    text=f"{month.value}/{day.value}/{year.value}: Game {game_number.value}",
+    anchor="w"
+)
+lbl_info.pack(padx=5, pady=5, side=tk.LEFT)
+
+# date and game set button  
+def show_info():
+    """
+    Shows the info the user inputs into the game info
+    """
+    for widget in [year, month, day, game_number]:
+        widget.set_info()
+    
+    lbl_info["text"] = f"{month.value}/{day.value}/{year.value}: Game {game_number.value}"
+
+# creating button and linking to function
+btn_set_info = tk.Button(master=frm_date_and_game, text="set", command=show_info)
+btn_set_info.pack(padx=2, pady=2, side=tk.LEFT)
 
 # Header
-for j, stat_label in zip(range(13),stat_labels):
+# ------
+# looping through stat labels and creating columns
+for j, stat_label in zip(range(13),STAT_LABELS):
     frm_title = tk.Frame(
         master=window,
         relief=tk.FLAT,
     )
-    frm_title.grid(row=0, column=j, padx=5, pady=5)
+    frm_title.grid(row=1, column=j, padx=5, pady=5)
     label = tk.Label(master=frm_title, text=stat_label)
     label.pack(padx=5, pady=5)
 
-frm = tk.Frame(
-    master=window,
-    relief=tk.GROOVE,
-    borderwidth=1
-)
+# Players
+# -------
+# looping through four players and creating sub-widgets
+player_widgets = {}
+for player, row in zip([1,2,3,4],[2,3,4,5]):
+    player_widgets[f"player{player}"] = PlayerStatWidget(row)
 
-widget_p1 = PlayerStatWidget(1)
-widget_p2 = PlayerStatWidget(2)
-widget_p3 = PlayerStatWidget(3)
-widget_p4 = PlayerStatWidget(4)
+# Save
+# ----
+def save_data():
+    """
+    Aggregates and saves the data from each of the players
+    """
+    combined_data = {label: [] for label in STAT_LABELS}
+    for p_widget in player_widgets.values():
+        for stat_label, stat_widget in p_widget.stats.items():
+            combined_data[stat_label].append(stat_widget.value)
+
+        combined_data["Player"].append(p_widget.player)
+
+    meta = f"{year.value}_{month.value}_{day.value}-game{game_number.value}"
+    df = pd.DataFrame(combined_data)
+    df.to_csv(f"{PATH_TO_TOP}/data/processed/stats-{meta}.csv", index=False)
+
+# save_button
+frm_save = tk.Frame(
+    master=window,
+    relief=tk.FLAT,
+)
+frm_save.grid(row=6,column=0)
+save_button = tk.Button(master=frm_save, text="Save Data", command=save_data)
+save_button.pack(padx=5, pady=5)
 
 # Running
+# -------
 window.mainloop()
