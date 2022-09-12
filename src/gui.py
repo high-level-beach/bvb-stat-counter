@@ -5,6 +5,8 @@ import pandas as pd
 
 import pathlib
 
+from colour import Color
+
 # Defining "global" variables
 PATH_TO_TOP = f"{pathlib.Path(__file__).resolve().parent.parent}"
 STAT_LABELS = [
@@ -22,15 +24,27 @@ class InfoSetter:
         self.value = value
         frm_game_info = tk.Frame(
                 master=window,
-                relief=tk.SUNKEN,
+                relief=tk.FLAT,
+                bg="black"
             )
-        frm_game_info.grid(row=i,column=j)
+        frm_game_info.grid(row=i,column=j,sticky="nsew")
 
-        self.lbl_info = tk.Label(master=frm_game_info, text=f"{info_label}:", anchor="w")
-        self.lbl_info.pack(padx=2, pady=2)
+        self.lbl_info = tk.Label(
+            master=frm_game_info,
+            text=f"{info_label}:",
+            font="bold",
+            fg="white",
+            bg="black",
+            anchor="w"
+        )
+        self.lbl_info.pack(fill=tk.BOTH, padx=0, pady=0)
 
-        self.ent_info = tk.Entry(master=frm_game_info, width=5)
-        self.ent_info.pack(padx=1,pady=2)
+        self.ent_info = tk.Entry(
+            master=frm_game_info,
+            width=5,
+            bg="white"
+        )
+        self.ent_info.pack(padx=2, pady=2, side=tk.LEFT)
 
     def set_info(self):
         """
@@ -40,26 +54,24 @@ class InfoSetter:
 
 class StatChangeWidget:
 
-    def __init__(self, i, j, value, stat_label) -> None:
+    def __init__(self, i, j, value, stat_label, color) -> None:
         self.value = value
         self.stat_label = stat_label
 
         frm = tk.Frame(
             master=window,
             relief=tk.GROOVE,
-            borderwidth=1
+            borderwidth=1,
+            bg=color
         )
 
         frm.grid(row=i,column=j)
 
-        self.btn_increase = tk.Button(master=frm, text="+", command=self.increment)
-        self.label = tk.Label(master=frm, text=f"{self.value}")
-        self.btn_decrease = tk.Button(master=frm, text="-", command=self.decrement)
+        self.btn_increase = tk.Button(master=frm, text="+", bg=color, command=self.increment)
+        self.label = tk.Label(master=frm, text=f"{self.value}", bg=color)
+        self.btn_decrease = tk.Button(master=frm, text="-", bg=color, command=self.decrement)
         for widget in [self.btn_increase,self.label,self.btn_decrease]:
-            widget.pack(padx=5,pady=5)
-
-        self.row = i
-        self.col = j
+            widget.pack(padx=0,pady=0)
 
     def increment(self):
         """
@@ -77,14 +89,15 @@ class StatChangeWidget:
 
 class ReceiveStatChangeWidget:
 
-    def __init__(self, i, j, value, stat_label) -> None:
+    def __init__(self, i, j, value, stat_label, color) -> None:
         self.value = value
         self.stat_label = stat_label
 
         frm = tk.Frame(
             master=window,
             relief=tk.GROOVE,
-            borderwidth=1
+            borderwidth=1,
+            bg=color
         )
         frm.grid(row=i,column=j)
 
@@ -96,16 +109,15 @@ class ReceiveStatChangeWidget:
         frm_inc.pack()
         for inc, fxn in zip([1,2,3],[self.inc_one,self.inc_two,self.inc_three]):
             btn_increase = tk.Button(master=frm_inc, text=f"+{inc}", command=fxn)
-            btn_increase.pack(padx=5, pady=5, side=tk.LEFT)
+            btn_increase.pack(padx=0, pady=0, side=tk.LEFT)
 
         frm_mid = tk.Frame(
             master=frm,
-            relief=tk.FLAT,
-            borderwidth=1
+            relief=tk.FLAT
         )
         frm_mid.pack()
-        self.label = tk.Label(master=frm_mid, text=f"{value}")
-        self.label.pack(padx=5, pady=5)
+        self.label = tk.Label(master=frm_mid, text=f"{value}", bg=color)
+        self.label.pack(padx=0, pady=0)
 
         frm_dec = tk.Frame(
             master=frm,
@@ -115,10 +127,7 @@ class ReceiveStatChangeWidget:
         frm_dec.pack()
         for dec, fxn in zip([1,2,3], [self.dec_one, self.dec_two, self.dec_three]):
             btn_increase = tk.Button(master=frm_dec, text=f"-{dec}", command=fxn)
-            btn_increase.pack(padx=5, pady=5, side=tk.LEFT)
-
-        self.row = i
-        self.col = j
+            btn_increase.pack(padx=0, pady=0, side=tk.LEFT)
 
     def inc_one(self):
         """
@@ -164,35 +173,37 @@ class ReceiveStatChangeWidget:
 
 class PlayerStatWidget:
 
-    def __init__(self, row) -> None:
+    def __init__(self, row, color) -> None:
         self.row = row
         self.player = ""
+        self.colors = list(Color(color).range_to(Color("white"),13))
 
         self.stats = {label: 0 for label in STAT_LABELS if label != "Player"}
 
         frm = tk.Frame(
             master=window,
             relief=tk.GROOVE,
-            borderwidth=1
+            borderwidth=1,
+            bg=self.colors[0]
         )
         # First Column: Player Name
         frm.grid(row=self.row, column=0, padx=5, pady=5)
 
-        self.lbl_player = tk.Label(master=frm, text=f"Enter Name")
-        self.lbl_player.pack(padx=5, pady=5)
+        self.lbl_player = tk.Label(master=frm, text=f"Enter Name", bg="white")
+        self.lbl_player.pack(fill=tk.BOTH, padx=5, pady=5)
 
         self.ent_player = tk.Entry(master=frm, width=8)
-        self.ent_player.pack(padx=5,pady=5)
+        self.ent_player.pack(fill=tk.BOTH, padx=5,pady=5)
 
-        btn_update = tk.Button(master=frm, text="update", command=self.set_player)
-        btn_update.pack(padx=5,pady=5)
+        btn_update = tk.Button(master=frm, text="update", command=self.set_player, bg=self.colors[0])
+        btn_update.pack(fill=tk.BOTH, padx=5,pady=5)
 
         # Stat Columns
         for j, stat_label in zip(range(1,13), self.stats.keys()):
             if j == 5:
-                self.stats[stat_label] = ReceiveStatChangeWidget(self.row, j, 0, stat_label)
+                self.stats[stat_label] = ReceiveStatChangeWidget(self.row, j, 0, stat_label, color=self.colors[j])
             else:
-                self.stats[stat_label] = StatChangeWidget(self.row, j, 0, stat_label)
+                self.stats[stat_label] = StatChangeWidget(self.row, j, 0, stat_label, color=self.colors[j])
 
         # Last Column: Save Stats
         frm_save = tk.Frame(
@@ -231,6 +242,14 @@ window.iconbitmap(f"{PATH_TO_TOP}/assets/hlb.ico")
 
 # Date and Game
 # -------------
+for j in range(15):
+    frm_bg = tk.Frame(
+        master=window,
+        relief=tk.FLAT,
+        border=2,
+        bg="white"
+    )
+    frm_bg.grid(row=0,column=j,sticky="nsew")
 # Creating info widgets
 year = InfoSetter(i=0,j=1,info_label="Year",value="1900")
 month = InfoSetter(i=0,j=2,info_label="Month",value="01")
@@ -266,6 +285,15 @@ btn_set_info.pack(padx=2, pady=2, side=tk.LEFT)
 
 # Header
 # ------
+# white background
+for j in range(15):
+    frm_bg = tk.Frame(
+        master=window,
+        relief=tk.FLAT,
+        border=2,
+        bg="white"
+    )
+    frm_bg.grid(row=1,column=j,sticky="nsew")
 # looping through stat labels and creating columns
 for j, stat_label in zip(range(13),STAT_LABELS):
     frm_title = tk.Frame(
@@ -280,8 +308,18 @@ for j, stat_label in zip(range(13),STAT_LABELS):
 # -------
 # looping through four players and creating sub-widgets
 player_widgets = {}
-for player, row in zip([1,2,3,4],[2,3,4,5]):
-    player_widgets[f"player{player}"] = PlayerStatWidget(row)
+for player, row, color in zip([1,2,3,4],[2,3,4,5],["red","green","blue","yellow"]):
+    # putting a background
+    for j in range(15):
+        frm_bg = tk.Frame(
+            master=window,
+            relief=tk.FLAT,
+            border=2,
+            bg=color
+        )
+        frm_bg.grid(row=row,column=j,sticky="nsew")
+    player_widgets[f"player{player}"] = PlayerStatWidget(row,color)
+
 
 # Save
 # ----
