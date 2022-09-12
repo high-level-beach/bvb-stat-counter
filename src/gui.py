@@ -242,14 +242,6 @@ window.iconbitmap(f"{PATH_TO_TOP}/assets/hlb.ico")
 
 # Date and Game
 # -------------
-for j in range(15):
-    frm_bg = tk.Frame(
-        master=window,
-        relief=tk.FLAT,
-        border=2,
-        bg="white"
-    )
-    frm_bg.grid(row=0,column=j,sticky="nsew")
 # Creating info widgets
 year = InfoSetter(i=0,j=1,info_label="Year",value="1900")
 month = InfoSetter(i=0,j=2,info_label="Month",value="01")
@@ -285,15 +277,6 @@ btn_set_info.pack(padx=2, pady=2, side=tk.LEFT)
 
 # Header
 # ------
-# white background
-for j in range(15):
-    frm_bg = tk.Frame(
-        master=window,
-        relief=tk.FLAT,
-        border=2,
-        bg="white"
-    )
-    frm_bg.grid(row=1,column=j,sticky="nsew")
 # looping through stat labels and creating columns
 for j, stat_label in zip(range(13),STAT_LABELS):
     frm_title = tk.Frame(
