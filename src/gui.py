@@ -7,6 +7,8 @@ import pathlib
 
 from colour import Color
 
+from custom_widgets import Background
+
 # Defining "global" variables
 PATH_TO_TOP = f"{pathlib.Path(__file__).resolve().parent.parent}"
 STAT_LABELS = [
@@ -235,21 +237,56 @@ class PlayerStatWidget:
         with open(f"{PATH_TO_TOP}/data/raw/{self.player}-stats.json", "w") as f:
             json.dump(stat_values, f)
 
+class SwitchWidget:
+
+    def __init__(self, i, j, switch_no=0) -> None:
+        self.row = i
+        self.score = "0 - 0"
+
+        frm = tk.Frame(
+            master=window,
+            relief=tk.GROOVE,
+            borderwidth=1,
+            bg="white"
+        )
+
+        frm.grid(row=self.row, column=j, padx=5, pady=5)
+
+        self.lbl = tk.Label(master=frm, text=f"Switch {switch_no}")
+        self.lbl.pack(fill=tk.BOTH, padx=5, pady=5)
+
+        frm_switch = tk.Frame(
+            master=frm,
+            relief=tk.GROOVE,
+            borderwidth=1
+        )
+        frm_switch.pack(fill=tk.BOTH, padx=0, pady=1)
+
+        self.top_team_score = tk.Entry(master=frm_switch, width=2)
+        self.top_team_score.pack(side=tk.LEFT, padx=0, pady=0)
+
+        lbl_dash = tk.Label(master=frm_switch, text=f" - ")
+        lbl_dash.pack(side=tk.LEFT, padx=0, pady=0)
+
+        self.bot_team_score = tk.Entry(master=frm_switch, width=2)
+        self.bot_team_score.pack(side=tk.LEFT, padx=0, pady=0)
+
+        btn_update = tk.Button(master=frm, text="set", command=self.set_score)
+        btn_update.pack(fill=tk.BOTH, padx=0,pady=1)
+
+    def set_score(self):
+        """
+        Updates the score to what is in the text entry
+        """
+        self.score = f"{self.top_team_score['text']} - {self.bot_team_score['text']}"
+
 # Setting up Window
 window = tk.Tk()
 window.title("Beach Volleyball Stat Counter")
 window.iconbitmap(f"{PATH_TO_TOP}/assets/hlb.ico")
 
-# Date and Game
-# -------------
-for j in range(15):
-    frm_bg = tk.Frame(
-        master=window,
-        relief=tk.FLAT,
-        border=2,
-        bg="white"
-    )
-    frm_bg.grid(row=0,column=j,sticky="nsew")
+# Date and Game (Row 0)
+# ---------------------
 # Creating info widgets
 year = InfoSetter(i=0,j=1,info_label="Year",value="1900")
 month = InfoSetter(i=0,j=2,info_label="Month",value="01")
@@ -283,17 +320,8 @@ def show_info():
 btn_set_info = tk.Button(master=frm_date_and_game, text="set", command=show_info)
 btn_set_info.pack(padx=2, pady=2, side=tk.LEFT)
 
-# Header
-# ------
-# white background
-for j in range(15):
-    frm_bg = tk.Frame(
-        master=window,
-        relief=tk.FLAT,
-        border=2,
-        bg="white"
-    )
-    frm_bg.grid(row=1,column=j,sticky="nsew")
+# Header (Row 1)
+# --------------
 # looping through stat labels and creating columns
 for j, stat_label in zip(range(13),STAT_LABELS):
     frm_title = tk.Frame(
@@ -304,25 +332,31 @@ for j, stat_label in zip(range(13),STAT_LABELS):
     label = tk.Label(master=frm_title, text=stat_label)
     label.pack(padx=5, pady=5)
 
-# Players
+# Players (Rows 2 - 6)
 # -------
 # looping through four players and creating sub-widgets
 player_widgets = {}
-for player, row, color in zip([1,2,3,4],[2,3,4,5],["red","green","blue","yellow"]):
+for player, row, color in zip([1,2,0,3,4],[2,3,4,5,6],["red","green","black","blue","yellow"]):
     # putting a background
-    for j in range(15):
-        frm_bg = tk.Frame(
-            master=window,
-            relief=tk.FLAT,
-            border=2,
-            bg=color
-        )
-        frm_bg.grid(row=row,column=j,sticky="nsew")
-    player_widgets[f"player{player}"] = PlayerStatWidget(row,color)
+    if row == 4:
+        Background(row,window,color,15,height=20)
+    else:
+        # adding the players
+        Background(row,window,color,15)
+        if row != 4:
+            player_widgets[f"player{player}"] = PlayerStatWidget(row,color)
 
+# Switches (Row 7)
+# ----------------
+switch_widgets = {}
+for possible_switches in range(6):
+    SwitchWidget(i=7, j=possible_switches+1, switch_no=possible_switches+1)
 
-# Save
-# ----
+# Plays (Row 8)
+# -------------
+
+# Save (Row 9)
+# ------------
 def save_data():
     """
     Aggregates and saves the data from each of the players
@@ -343,7 +377,7 @@ frm_save = tk.Frame(
     master=window,
     relief=tk.FLAT,
 )
-frm_save.grid(row=6,column=0)
+frm_save.grid(row=9,column=0)
 save_button = tk.Button(master=frm_save, text="Save Data", command=save_data)
 save_button.pack(padx=5, pady=5)
 
